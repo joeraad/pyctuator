@@ -43,6 +43,8 @@ class Pyctuator:
             additional_app_info: Optional[dict] = None,
             ssl_context: Optional[ssl.SSLContext] = None,
             customizer: Optional[Callable] = None,
+            enabled_endpoints: Optional[list[str]] = ["env", "info", "health",
+                                                      "metrics", "loggers", "dump", "threaddump", "logfile", "httptrace"],
     ) -> None:
         """The entry point for integrating pyctuator with a web-frameworks such as FastAPI and Flask.
 
@@ -96,6 +98,7 @@ class Pyctuator:
             logfile_max_size,
             logfile_formatter,
             additional_app_info,
+            enabled_endpoints,
         )
 
         # Register default health/metrics/environment providers
@@ -127,7 +130,7 @@ class Pyctuator:
         for framework_name, framework_integration_function in framework_integrations.items():
             if self._is_framework_installed(framework_name):
                 logging.debug("Framework %s is installed, trying to integrate with it", framework_name)
-                success = framework_integration_function(app, self.pyctuator_impl, customizer)
+                success = framework_integration_function(app, self.pyctuator_impl, customizer, enabled_endpoints)
                 if success:
                     logging.debug("Integrated with framework %s", framework_name)
                     if registration_url is not None:
@@ -189,7 +192,8 @@ class Pyctuator:
             self,
             app: Any,
             pyctuator_impl: PyctuatorImpl,
-            customizer: Optional[Callable]
+            customizer: Optional[Callable],
+            enabled_endpoints
     ) -> bool:
         """
         This method should only be called if we detected that FastAPI is installed.
@@ -199,7 +203,7 @@ class Pyctuator:
         from fastapi import FastAPI
         if isinstance(app, FastAPI):
             from pyctuator.impl.fastapi_pyctuator import FastApiPyctuator
-            FastApiPyctuator(app, pyctuator_impl, False, customizer)
+            FastApiPyctuator(app, pyctuator_impl, False, customizer, enabled_endpoints)
             return True
         return False
 

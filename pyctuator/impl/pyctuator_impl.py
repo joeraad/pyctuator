@@ -57,6 +57,7 @@ class PyctuatorImpl:
             logfile_max_size: int,
             logfile_formatter: str,
             additional_app_info: Optional[dict],
+            enabled_endpoints: Optional[List[str]],
     ):
         self.app_info = app_info
         self.pyctuator_endpoint_url = pyctuator_endpoint_url
@@ -71,6 +72,7 @@ class PyctuatorImpl:
         self.http_tracer = HttpTracer()
 
         self.secret_scrubber: Callable[[Dict], Dict] = SecretScrubber().scrub_secrets
+        self.enabled_endpoints=enabled_endpoints
 
         # Determine the endpoint's URL path prefix and make sure it doesn't end with a "/"
         self.pyctuator_endpoint_path_prefix = urlparse(pyctuator_endpoint_url).path

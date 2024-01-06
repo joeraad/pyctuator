@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from pyctuator.impl.pyctuator_impl import PyctuatorImpl
 
@@ -16,21 +16,42 @@ class LinkHref:
 @dataclass
 class EndpointsLinks:
     self: LinkHref
-    env: LinkHref
-    info: LinkHref
-    health: LinkHref
-    metrics: LinkHref
-    loggers: LinkHref
-    dump: LinkHref
-    threaddump: LinkHref
-    logfile: LinkHref
-    httptrace: LinkHref
+    env: Optional[LinkHref] = None
+    info: Optional[LinkHref] = None
+    health: Optional[LinkHref] = None
+    metrics: Optional[LinkHref] = None
+    loggers: Optional[LinkHref] = None
+    dump: Optional[LinkHref] = None
+    threaddump: Optional[LinkHref] = None
+    logfile: Optional[LinkHref] = None
+    httptrace: Optional[LinkHref] = None
+    def __init__(self, links: dict):
+        self.self = links.get("self")
+        self.env = links.get("env")
+        self.info = links.get("info")
+        self.health = links.get("health")
+        self.metrics = links.get("metrics")
+        self.loggers = links.get("loggers")
+        self.dump = links.get("dump")
+        self.threaddump = links.get("threaddump")
+        self.logfile = links.get("logfile")
+        self.httptrace = links.get("httptrace")
+    
+    def __iter__(self):
+        for key in self.__dict__:
+            if getattr(self, key) is not None:
+                yield key, getattr(self, key)
 
 
 @dataclass
 class EndpointsData:
     _links: EndpointsLinks
 
+def get_LinkHref(pyctuator_endpoint_url,enabled_endpoints):
+        links = {"self":LinkHref(pyctuator_endpoint_url, False)}
+        for endpoint in enabled_endpoints:
+            links[endpoint]=LinkHref(pyctuator_endpoint_url + "/" + endpoint, False)
+        return links
 
 class PyctuatorRouter(ABC):
 
@@ -47,14 +68,5 @@ class PyctuatorRouter(ABC):
 
     def get_endpoints_links(self):
         return EndpointsLinks(
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url, False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/env", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/info", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/health", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/metrics", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/loggers", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/dump", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/threaddump", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/logfile", False),
-            LinkHref(self.pyctuator_impl.pyctuator_endpoint_url + "/httptrace", False),
+            get_LinkHref(self.pyctuator_impl.pyctuator_endpoint_url,self.pyctuator_impl.enabled_endpoints)
         )
